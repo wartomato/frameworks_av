@@ -938,6 +938,8 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
             }
 
 #ifdef QCOM_HARDWARE
+            ExtendedCodec::configureFramePackingFormat(
+                    meta, mOMX, mNode, mComponentName);
             ExtendedCodec::enableSmoothStreaming(
                     mOMX, mNode, &mInSmoothStreamingMode, mComponentName);
 #endif
@@ -6016,13 +6018,14 @@ status_t OMXCodec::pause() {
     CODEC_LOGV("pause mState=%d", mState);
 
     Mutex::Autolock autoLock(mLock);
-    if (mState != EXECUTING) {
-        return UNKNOWN_ERROR;
-    }
-    while (isIntermediateState(mState)) {
-        mAsyncCompletion.wait(mLock);
-    }
     if (!strncmp(mComponentName, "OMX.qcom.", 9) && !mIsEncoder) {
+        if (mState != EXECUTING) {
+            return UNKNOWN_ERROR;
+        }
+        while (isIntermediateState(mState)) {
+            mAsyncCompletion.wait(mLock);
+        }
+
         status_t err = mOMX->sendCommand(mNode,
             OMX_CommandStateSet, OMX_StatePause);
         CHECK_EQ(err, (status_t)OK);
