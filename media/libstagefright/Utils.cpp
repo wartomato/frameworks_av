@@ -660,13 +660,13 @@ bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo, const sp<MetaData
      }
     info.bit_rate = brate;
 
-    int32_t bitWidth = 16;
 #ifdef ENABLE_AV_ENHANCEMENTS
+    int32_t bitWidth = 16;
     if (!meta->findInt32(kKeySampleBits, &bitWidth)) {
         ALOGV("bits per sample not set, using default %d", bitWidth);
     }
-#endif
     info.bit_width = bitWidth;
+#endif
 
     info.stream_type = streamType;
     info.has_video = hasVideo;
