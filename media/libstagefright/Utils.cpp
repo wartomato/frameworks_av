@@ -595,14 +595,6 @@ bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo, const sp<MetaData
 
     audio_offload_info_t info = AUDIO_INFO_INITIALIZER;
 
-    int32_t bitWidth = 16;
-#ifdef ENABLE_AV_ENHANCEMENTS
-    if (!meta->findInt32(kKeySampleBits, &bitWidth)) {
-        ALOGV("bits per sample not set, using default %d", bitWidth);
-    }
-#endif
-    info.bit_width = bitWidth;
-
     info.format = AUDIO_FORMAT_INVALID;
     if (mapMimeToAudioFormat(info.format, mime) != OK) {
         ALOGE(" Couldn't map mime type \"%s\" to a valid AudioSystem::audio_format !", mime);
@@ -669,6 +661,14 @@ bool canOffloadStream(const sp<MetaData>& meta, bool hasVideo, const sp<MetaData
         ALOGV("track of type '%s' does not publish bitrate", mime);
      }
     info.bit_rate = brate;
+
+    int32_t bitWidth = 16;
+#ifdef ENABLE_AV_ENHANCEMENTS
+    if (!meta->findInt32(kKeySampleBits, &bitWidth)) {
+        ALOGV("bits per sample not set, using default %d", bitWidth);
+    }
+    info.bit_width = bitWidth;
+#endif
 
     info.stream_type = streamType;
     info.has_video = hasVideo;
