@@ -3622,7 +3622,7 @@ void OMXCodec::drainInputBuffers() {
                 continue;
             }
 
-#if defined ((OMAP_ENHANCEMENT && defined TARGET_OMAP3) || SEMC_ICS_CAMERA_BLOB)
+#if defined OMAP_ENHANCEMENT && defined TARGET_OMAP3 || SEMC_ICS_CAMERA_BLOB
             if (mIsEncoder && mIsVideo && (i == 4)) {
                 break;
             }
