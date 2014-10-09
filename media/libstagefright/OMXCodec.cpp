@@ -886,19 +886,12 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
             CODEC_LOGE("setMP2Format() failed (err = %d)", err);
             return err;
         }
-    } else if (!strcasecmp(MEDIA_MIMETYPE_AUDIO_AC3, mMIME) ||
-               !strcasecmp(MEDIA_MIMETYPE_AUDIO_EAC3, mMIME)) {
+    } else if (!strcasecmp(MEDIA_MIMETYPE_AUDIO_AC3, mMIME)) {
         status_t err = setAC3Format(meta);
         if (err != OK) {
             CODEC_LOGE("setAC3Format() failed (err = %d)", err);
             return err;
         }
-#ifdef ENABLE_AV_ENHANCEMENTS
-        // FFMPEG will convert floating point to 24-bit PCM
-        if (ExtendedUtils::isHiresAudioEnabled()) {
-            meta->setInt32(kKeySampleBits, 24);
-        }
-#endif
     } else if (!strcasecmp(MEDIA_MIMETYPE_AUDIO_APE, mMIME))  {
         status_t err = setAPEFormat(meta);
         if (err != OK) {
@@ -925,18 +918,16 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
         }
 #ifdef QCOM_HARDWARE
     } else {
-        if (!mIsVideo) {
-            if (mIsEncoder) {
-                int32_t numChannels, sampleRate;
-                CHECK(meta->findInt32(kKeyChannelCount, &numChannels));
-                CHECK(meta->findInt32(kKeySampleRate, &sampleRate));
-                setRawAudioFormat(kPortIndexInput, sampleRate, numChannels);
-            }
-            status_t err = ExtendedCodec::setAudioFormat(
-                    meta, mMIME, mOMX, mNode, mIsEncoder);
-            if(OK != err) {
-                return err;
-            }
+        if (mIsEncoder && !mIsVideo) {
+            int32_t numChannels, sampleRate;
+            CHECK(meta->findInt32(kKeyChannelCount, &numChannels));
+            CHECK(meta->findInt32(kKeySampleRate, &sampleRate));
+            setRawAudioFormat(kPortIndexInput, sampleRate, numChannels);
+        }
+        status_t err = ExtendedCodec::setAudioFormat(
+                meta, mMIME, mOMX, mNode, mIsEncoder);
+        if(OK != err) {
+            return err;
         }
 #endif
     }
@@ -2164,13 +2155,6 @@ status_t OMXCodec::allocateBuffersOnPort(OMX_U32 portIndex) {
             return err;
         }
     }
-
-#if defined(ENABLE_AV_ENHANCEMENTS) || defined(ENABLE_OFFLOAD_ENHANCEMENTS)
-    if (!mIsVideo && portIndex == kPortIndexOutput &&
-            !strncmp(mComponentName, "OMX.ffmpeg.", 11)) {
-        ExtendedCodec::updatePcmOutputFormat(mOutputFormat, mOMX, mNode, NULL);
-    }
-#endif
 
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
@@ -4593,7 +4577,7 @@ status_t OMXCodec::setFLACFormat(const sp<MetaData> &meta)
 {
     int32_t numChannels = 0;
     int32_t sampleRate = 0;
-    int32_t bitsPerSample = 16;
+    int32_t bitsPerSample = 0;
     OMX_AUDIO_PARAM_FLACTYPE param;
 
     if (mIsEncoder) {
@@ -4603,12 +4587,10 @@ status_t OMXCodec::setFLACFormat(const sp<MetaData> &meta)
 
     CHECK(meta->findInt32(kKeyChannelCount, &numChannels));
     CHECK(meta->findInt32(kKeySampleRate, &sampleRate));
-    if (!meta->findInt32(kKeySampleBits, &bitsPerSample)) {
-        CODEC_LOGV("BitsPerSample not set, using default");
-    }
+    CHECK(meta->findInt32(kKeySampleBits, &bitsPerSample));
 
-    CODEC_LOGV("Channels: %d, SampleRate: %d, BitsPerSample: %d",
-            numChannels, sampleRate, bitsPerSample);
+    CODEC_LOGV("Channels: %d, SampleRate: %d",
+            numChannels, sampleRate);
 
     InitOMXParams(&param);
     param.nPortIndex = kPortIndexInput;
@@ -4620,7 +4602,7 @@ status_t OMXCodec::setFLACFormat(const sp<MetaData> &meta)
 
     param.nChannels = numChannels;
     param.nSampleRate = sampleRate;
-    param.nBitsPerSample = bitsPerSample;
+    //param.nBitsPerSample = bitsPerSample;
 
     err = mOMX->setParameter(
             mNode, OMX_IndexParamAudioFlac, &param, sizeof(param));
