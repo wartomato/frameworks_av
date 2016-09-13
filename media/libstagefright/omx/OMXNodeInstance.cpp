@@ -1235,6 +1235,12 @@ status_t OMXNodeInstance::allocateSecureBuffer(
         return BAD_VALUE;
     }
 
+    if (portIndex >= NELEM(mSecureBufferType)) {
+        ALOGE("b/31385713, portIndex(%u)", portIndex);
+        android_errorWriteLog(0x534e4554, "31385713");
+        return BAD_VALUE;
+    }
+
     Mutex::Autolock autoLock(mLock);
 
     BufferMeta *buffer_meta = new BufferMeta(size, portIndex);
