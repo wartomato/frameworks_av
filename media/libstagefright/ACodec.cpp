@@ -85,11 +85,6 @@
 
 #include <stagefright/AVExtensions.h>
 
-#ifdef USE_S3D_SUPPORT
-#include "Exynos_OMX_Def.h"
-#include "ExynosHWCService.h"
-#endif
-
 namespace android {
 
 enum {
@@ -1028,10 +1023,6 @@ status_t ACodec::setupNativeWindowSizeFormatAndUsage(
 
     if (mFlags & kFlagIsGrallocUsageProtected) {
         usage |= GRALLOC_USAGE_PROTECTED;
-#ifdef GRALLOC_USAGE_PRIVATE_NONSECURE
-        if (!(mFlags & kFlagIsSecure))
-            usage |= GRALLOC_USAGE_PRIVATE_NONSECURE;
-#endif
     }
 
     usage |= kVideoGrallocUsage;
