@@ -1868,7 +1868,7 @@ void OMXNodeInstance::onEvent(
         case OMX_EventPortSettingsChanged:
             arg2String = asString((OMX_INDEXEXTTYPE)arg2);
             // fall through
-#ifdef USE_S3D_SUPPORT
+#ifdef USE_LegacyMhl_SUPPORT
         case (OMX_EVENTTYPE)OMX_EventS3DInformation:
         {
 // we have no way to check this in here!
