@@ -34,6 +34,7 @@ typedef Parcel::ReadableBlob ReadableBlob;
 
 CameraMetadata::CameraMetadata() :
         mBuffer(NULL), mReserved(false), mLocked(false) {
+    (void)mReserved;
 }
 
 CameraMetadata::CameraMetadata(size_t entryCapacity, size_t dataCapacity) :
