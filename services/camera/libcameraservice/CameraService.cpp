@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <pthread.h>
-#include <string>
 
 #include <android/hardware/ICamera.h>
 #include <android/hardware/ICameraClient.h>
@@ -75,8 +74,6 @@
 #include "utils/CameraTraces.h"
 #include "utils/TagMonitor.h"
 
-#include <vendor/lineage/camera/motor/1.0/ICameraMotor.h>
-
 namespace {
     const char* kPermissionServiceName = "permission";
 }; // namespace anonymous
@@ -90,7 +87,6 @@ using hardware::ICameraServiceProxy;
 using hardware::ICameraServiceListener;
 using hardware::camera::common::V1_0::CameraDeviceStatus;
 using hardware::camera::common::V1_0::TorchModeStatus;
-using vendor::lineage::camera::motor::V1_0::ICameraMotor;
 
 // ----------------------------------------------------------------------------
 // Logging support -- this is for debugging only
@@ -1315,11 +1311,14 @@ Status CameraService::connectHelper(const sp<CALLBACK>& cameraCb, const String8&
         int api1CameraId, int halVersion, const String16& clientPackageName, int clientUid,
         int clientPid, apiLevel effectiveApiLevel, bool legacyMode, bool shimUpdateOnly,
         /*out*/sp<CLIENT>& device) {
-    sp<ICameraMotor> motor_service = ICameraMotor::getService();
-    if (motor_service != nullptr) {
-        motor_service->onConnect(std::stoi(cameraId.string()));
+    char motor_bin[255];
+    property_get("persist.vendor.camera.motor_bin", motor_bin, "");
+    if (strcmp(motor_bin, "") != 0) {
+        char cmd[255];
+        sprintf(cmd, "%s %s %s", motor_bin, "connect", cameraId.string());
+        ALOGI("calling %s", cmd);
+        system(cmd);
     }
-    
     binder::Status ret = binder::Status::ok();
 
     String8 clientName8(clientPackageName);
@@ -2211,9 +2210,13 @@ CameraService::BasicClient::~BasicClient() {
 }
 
 binder::Status CameraService::BasicClient::disconnect() {
-    sp<ICameraMotor> motor_service = ICameraMotor::getService();
-    if (motor_service != nullptr) {
-        motor_service->onDisconnect(std::stoi(mCameraIdStr.string()));
+    char motor_bin[255];
+    property_get("persist.vendor.camera.motor_bin", motor_bin, "");
+    if (strcmp(motor_bin, "") != 0) {
+        char cmd[255];
+        sprintf(cmd, "%s %s %s", motor_bin, "disconnect", mCameraIdStr.string());
+        ALOGI("calling %s", cmd);
+        system(cmd);
     }
     binder::Status res = Status::ok();
     if (mDisconnected) {
